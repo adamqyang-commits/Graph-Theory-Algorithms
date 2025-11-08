@@ -1,0 +1,443 @@
+import java.util.*;
+import java.util.stream.IntStream;
+
+public class Main {
+    public static int size;
+    public static final char[] ABC = {'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'};
+    public static final int[][] test1 = {{0,100,50,70},{100,0,75,150},{50,75,0,300},{70,150,300,0}};
+    public static final int[][] test2 = {{0,4,8,9,5},{4,0,10,14,6},{8,10,0,7,11},{9,14,7,0,13},{5,6,11,13,0}};
+    public static final int[][] digraphTest = {{0,2,0,0,0,0,0,0},{0,0,5,4,0,0,3,0},{0,0,0,0,0,0,0,3},{0,0,0,0,2,0,0,0},{0,0,0,0,0,0,0,3},{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,7},{0,0,0,0,0,3,0,0}};
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        int[][] adjMatrix;
+        boolean digraph = false;
+        int preset = -1;
+        boolean done = false;
+        while (!done) {
+            System.out.print("Select a preset graph from 1-3, or input 0 to create your own graph.");
+            try {
+                preset = Integer.parseInt(sc.nextLine());
+                if ((preset < 0) || (preset > 3)) {
+                    throw new Exception("Input an integer from 0-3.");
+                }
+                done = true;
+            }
+            catch (Exception e) {
+                System.out.println(e.toString().substring(10) + "\n");
+            }
+        }
+        if (preset > 0) {
+            if (preset == 1) {
+                adjMatrix = test1;
+                size = test1.length;
+            }
+            else if (preset == 2) {
+                adjMatrix = test2;
+                size = test2.length;
+            }
+            else if (preset == 3) {
+                adjMatrix = digraphTest;
+                size = digraphTest.length;
+                digraph = true;
+            }
+            else {
+                adjMatrix = test1;
+                size = test1.length;
+            }
+        }
+        else {
+            done = false;
+            while (!done) {
+                System.out.print("Input the number of vertexes in the graph:");
+                try {
+                    size = Integer.parseInt(sc.nextLine());
+                    if (size < 4) {
+                        throw new Exception("Input an integer greater than 3.");
+                    }
+                    done = true;
+                }
+                catch (Exception e) {
+                    System.out.println(e.toString().substring(10) + "\n");
+                }
+            }
+            adjMatrix = new int [size][size];
+            System.out.print("Is your graph a digraph? Input true if true; input anything if false.");
+            digraph = Boolean.parseBoolean(sc.nextLine());
+            System.out.println("Digraph: " + digraph);
+            System.out.println("\nSet edge weights:");
+            if (!digraph) {
+                for (int i = 0; i < size - 1; i++) {
+                    for (int j = i + 1; j < size; j++) {
+                        System.out.print("From vertex " + ABC[i] + " to " + ABC[j] + ":");
+                        done = false;
+                        while (!done) {
+                            done = true;
+                            try {
+                                adjMatrix[i][j] = Integer.parseInt(sc.nextLine());
+                                adjMatrix[j][i] = adjMatrix[i][j];
+                                if (adjMatrix[i][j] < 0) {
+                                    throw new Exception("Input a nonnegative integer.");
+                                }
+                            }
+                            catch (Exception e) {
+                                System.out.println(e.toString().substring(10));
+                                done = false;
+                            }
+                        }
+                    }
+                }
+            }
+            else {
+                for (int i = 0; i < size; i++) {
+                    for (int j = 0; j < size; j++) {
+                        if ((i != j) && (adjMatrix[j][i] == 0)) {
+                            System.out.print("From vertex " + ABC[i] + " to " + ABC[j] + ":");
+                            done = false;
+                            while (!done) {
+                                done = true;
+                                try {
+                                    adjMatrix[i][j] = Integer.parseInt(sc.nextLine());
+                                    if (adjMatrix[i][j] < 0) {
+                                        throw new Exception("Input a nonnegative integer.");
+                                    }
+                                }
+                                catch (Exception e) {
+                                    System.out.println(e.toString().substring(10));
+                                    done = false;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        System.out.println("\nYour adjacency matrix:");
+        printMatrix(adjMatrix);
+        System.out.println("\nSelect an algorithm from 1-5, or input 0 to stop:");
+        System.out.println("1: Nearest Neighbor");
+        System.out.println("2: Best Edge");
+        System.out.println("3: Dijkstra's");
+        System.out.println("4: Kruskal's");
+        System.out.print("5: Critical Path");
+        int alg = -1;
+        do { // while (alg != 0);
+            try {
+                alg = Integer.parseInt(sc.nextLine());
+                if ((alg < 0) || (alg > 5)) {
+                    throw new Exception(alg + " is not an available algorithm."); 
+                }
+            }
+            catch (Exception e) {
+                System.out.println(e.toString().substring(10));
+            }
+            if (alg == 0) { // stop
+                break;
+            }
+            else if (alg == 1) { // nearest neighbor
+                int startVertex = -1;
+                done = false;
+                while (!done) {
+                    done = true;
+                    try {
+                        System.out.print("\nSpecify a starting vertex:");
+                        startVertex = Integer.parseInt(sc.nextLine());
+                        if ((startVertex < 0) || (startVertex > size - 1)) {
+                            throw new Exception(startVertex + " is out of bounds. Please select a vertex from 0-" + (size - 1) + ".");
+                        }
+                    }
+                    catch (Exception e) {
+                        System.out.println(e.toString().substring(10));
+                        done = false;
+                    }
+                }
+                nearestNeighbor(startVertex, adjMatrix);
+            }
+            else if (alg == 2) { // best edge
+                bestEdge(adjMatrix);
+            }
+            else if (alg == 3) { // dijkstras
+                int startVertex = -1;
+                done = false;
+                while (!done) {
+                    done = true;
+                    try {
+                        System.out.print("\nSpecify a starting vertex:");
+                        startVertex = Integer.parseInt(sc.nextLine());
+                        if ((startVertex < 0) || (startVertex > size - 1)) {
+                            throw new Exception(startVertex + " is out of bounds. Please select a vertex from 0-" + (size - 1) + ".");
+                        }
+                    }
+                    catch (Exception e) {
+                        System.out.println(e.toString().substring(10));
+                        done = false;
+                    }
+                }
+                int endVertex = -1;
+                done = false;
+                while (!done) {
+                    done = true;
+                    try {
+                        System.out.print("Specify an ending vertex:");
+                        endVertex = Integer.parseInt(sc.nextLine());
+                        if ((endVertex < 0) || (endVertex > size - 1)) {
+                            throw new Exception(endVertex + " is out of bounds. Please select a vertex from 0-" + (size - 1) + ".");
+                        }
+                    }
+                    catch (Exception e) {
+                        System.out.println(e.toString().substring(10));
+                        done = false;
+                    }
+                }
+                dijkstras(startVertex, endVertex, adjMatrix);
+            }
+            else if (alg == 4) { // kruskals
+                kruskals(adjMatrix);
+            }
+            else if (alg == 5) { // critical path
+                if (digraph == true) {
+                    criticalPath(adjMatrix);
+                }
+                else {
+                    System.out.println("Cannot run algorithm as graph is not a digraph.");
+                }
+            }
+            System.out.print("\nSelect another algorithm, or input 0 to stop:");
+        }
+        while (alg != 0);
+    }
+    public static void printMatrix(int[][] matrix) {
+        for (int[] row : matrix) {
+            for (int weight : row) {
+                System.out.print(weight + " ");
+            }
+            System.out.println();
+        }
+    }
+    public static void nearestNeighbor(int startVertex, int[][] matrix) {
+        int cost = 0;
+        int[] path = new int[size + 1];
+        path[0] = startVertex;
+        path[size] = startVertex;
+        for (int i = 1; i < size; i++) {
+            path[i] = -1;
+        }
+        for (int i = 1; i < size; i++) {
+            int to = -1;
+            int min = Integer.MAX_VALUE;
+            for (int j = 0; j < size; j++) {
+                final int J = j;
+                boolean visited = IntStream.of(path).anyMatch(x -> x == J);
+                if ((j != startVertex) && (matrix[startVertex][j] < min) && !visited) {
+                    min = matrix[startVertex][j];
+                    to = j;
+                }
+            }
+            cost += min;
+            path[i] = to;
+            startVertex = to;
+        }
+        cost += matrix[startVertex][path[size]];
+        char[] letterPath = new char[path.length];
+        for (int i = 0; i < path.length; i++) {
+            letterPath[i] = ABC[path[i]];
+        }
+        System.out.println("\nNearest Neighbor Algorithm Solution:");
+        System.out.println("Path: " + Arrays.toString(letterPath));
+        System.out.println("Cost: " + cost);
+    }
+    public static void bestEdge(int[][] matrix) {
+        int cost = 0;
+        int[] vertexDegrees = new int[size];
+        ArrayList<String> blacklist = new ArrayList<String>();
+        ArrayList<String> edges = new ArrayList<String>();
+        while (edges.size() < size) {
+            int min = Integer.MAX_VALUE;
+            String edge = "";
+            for (int i = 0; i < size - 1; i++) {
+                for (int j = i + 1; j < size; j++) {
+                    String testEdge = "" + i + j;
+                    if ((matrix[i][j] < min) && !blacklist.contains(testEdge)) {
+                        vertexDegrees[i]++;
+                        vertexDegrees[j]++;
+                        boolean degreeThree = IntStream.of(vertexDegrees).anyMatch(x -> x == 3);
+                        if (degreeThree) {
+                            blacklist.add(testEdge);
+                        }
+                        else {
+                            boolean incompleteCircuit = false;
+                            for (int x : vertexDegrees) {
+                                if (x == 1) {
+                                    incompleteCircuit = false;
+                                    break;
+                                }
+                                if ((!incompleteCircuit) && (x == 0)) {
+                                    incompleteCircuit = true;
+                                }
+                            }
+                            if (incompleteCircuit) {
+                                blacklist.add(testEdge);
+                            }
+                            else {
+                                min = matrix[i][j];
+                                edge = "" + i + j;
+                            }
+                        }
+                        vertexDegrees[i]--;
+                        vertexDegrees[j]--;
+                    }
+                }
+            }
+            vertexDegrees[Integer.parseInt(edge.substring(0, 1))]++;
+            vertexDegrees[Integer.parseInt(edge.substring(1))]++;
+            edges.add(edge);
+            blacklist.add(edge);
+            cost += min;
+        }
+        for (int i = 0; i < edges.size(); i++) {
+            edges.set(i, "" + ABC[Integer.parseInt(edges.get(i).substring(0, 1))] + ABC[Integer.parseInt(edges.get(i).substring(1))]);
+        }
+        System.out.println("\nBest Edge Algorithm Solution:");
+        System.out.println("Edges: " + edges);
+        System.out.println("Cost: " + cost);
+    }
+    public static void dijkstras(int startVertex, int endVertex, int[][] matrix) {
+        String[] paths = new String[size];
+        for (int i = 0; i < size; i++) {
+            paths[i] = "";
+        }
+        int[] visited = new int[size];
+        int[] distance = new int[size];
+        distance[startVertex] = 0;
+        for (int i = 1; i < size; i++) {
+            distance[i] = Integer.MAX_VALUE;
+        }
+        int from = startVertex;
+        while (from != endVertex) {
+            visited[from]++;
+            for (int to = 0; to < size; to++) {
+                if ((visited[to] == 0) && (matrix[from][to] != 0) && ((matrix[from][to] + distance[from]) < distance[to])) {
+                    distance[to] = matrix[from][to] + distance[from];
+                    paths[to] = paths[from] + from;
+                }
+            }
+            int min = Integer.MAX_VALUE;
+            int minIndex = -1;
+            for (int i = 0; i < size; i++) {
+                if ((visited[i] == 0) && (distance[i] > 0) && (distance[i] < min)) {
+                    min = distance[i];
+                    minIndex = i;
+                }
+            }
+            from = minIndex;
+        }
+        paths[endVertex] = paths[endVertex] + endVertex;
+        char[] letterPath = paths[endVertex].toCharArray();
+        for (int i = 0; i < letterPath.length; i++) {
+            letterPath[i] = ABC[Integer.parseInt("" + letterPath[i])];
+        }
+        System.out.println("\nDijkstra's Algorithm Solution:");
+        System.out.println("Path: " + Arrays.toString(letterPath));
+        System.out.println("Cost: " + distance[endVertex]);
+    }
+    public static void kruskals(int[][] matrix) {
+        int cost = 0;
+        int[] sets = new int[size];
+        for (int i = 0; i < size; i++) {
+            sets[i] = i;
+        }
+        ArrayList<String> blacklist = new ArrayList<String>();
+        ArrayList<String> edges = new ArrayList<String>();
+        while (edges.size() < size - 1) {
+            int min = Integer.MAX_VALUE;
+            String edge = "";
+            for (int i = 0; i < size - 1; i++) {
+                for (int j = i + 1; j < size; j++) {
+                    String testEdge = "" + i + j;
+                    if ((matrix[i][j] < min) && !blacklist.contains(testEdge)) {
+                        if (sets[i] == sets[j]) {
+                            blacklist.add(testEdge);
+                        }
+                        else {
+                            min = matrix[i][j];
+                            edge = "" + i + j;
+                        }
+                    }
+                }
+            }
+            int setOne = sets[Integer.parseInt(edge.substring(0, 1))];
+            int setTwo = sets[Integer.parseInt(edge.substring(1))];
+            for (int i = 0; i < size; i++) {
+                if (sets[i] == setTwo) {
+                    sets[i] = setOne;
+                }
+            }
+            edges.add(edge);
+            blacklist.add(edge);
+            cost += min;
+        }
+        for (int i = 0; i < edges.size(); i++) {
+            edges.set(i, "" + ABC[Integer.parseInt(edges.get(i).substring(0, 1))] + ABC[Integer.parseInt(edges.get(i).substring(1))]);
+        }
+        System.out.println("\nKruskal's Algorithm Solution:");
+        System.out.println("Edges: " + edges);
+        System.out.println("Cost: " + cost);
+    }
+    public static void criticalPath(int[][] matrix) {
+        ArrayList<Integer> path = new ArrayList<Integer>();
+        int[] earliest = new int[size];
+        int[] latest = new int[size];
+        for (int i = 0; i < size; i++) {
+            latest[i] = Integer.MAX_VALUE;
+        }
+        boolean earliestChange = true;
+        while (earliestChange) {
+            earliestChange = false;
+            for (int j = 0; j < size; j++) {
+                for (int i = 0; i < size; i++) {
+                    if ((matrix[i][j] > 0) && (earliest[i] + matrix[i][j] > earliest[j])) {
+                        earliest[j] = earliest[i] + matrix[i][j];
+                        earliestChange = true;
+                    }
+                }
+            }
+        }
+        int cost = 0;
+        int endVertex = -1;
+        for (int i = 0; i < size; i++) {
+            if (earliest[i] > cost) {
+                cost = earliest[i];
+                endVertex = i;
+            }
+        }
+        latest[endVertex] = cost;
+        boolean latestChange = true;
+        while (latestChange) {
+            latestChange = false;
+            for (int i = 0; i < size; i++) {
+                for (int j = 0; j < size; j++) {
+                    if ((matrix[i][j] > 0) && (latest[j] - matrix[i][j] < latest[i])) {
+                        latest[i] = latest[j] - matrix[i][j];
+                        latestChange = true;
+                    }
+                }
+            }
+        }
+        path.add(0);
+        int from = 0;
+        while (from != endVertex) {
+            for (int to = 0; to < size; to++) {
+                if ((matrix[from][to]) > 0 && (earliest[to] == latest[to])) {
+                    path.add(to);
+                    from = to;
+                }
+            }
+        }
+        char[] letterPath = new char[path.size()];
+        for (int i = 0; i < path.size(); i++) {
+            letterPath[i] = ABC[path.get(i)];
+        }
+        System.out.println("\nCritical Path Solution:");
+        System.out.println("Path: " + Arrays.toString(letterPath));
+        System.out.println("Cost: " + cost);
+    }
+}
